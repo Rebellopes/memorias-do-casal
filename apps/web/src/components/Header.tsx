@@ -25,9 +25,9 @@ export function Header() {
   const [admin, setAdmin] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/admin', { method: 'POST', body: '{}' })
+    fetch('/api/auth/admin/check')
       .then((r) => r.json())
-      .then((d) => setAdmin(d.success));
+      .then((d) => setAdmin(d.authenticated));
   }, []);
 
   const isAdminPage = pathname?.startsWith('/admin');

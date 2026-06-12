@@ -8,12 +8,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/auth/admin', { method: 'POST', body: '{}' })
+    fetch('/api/auth/admin/check')
       .then((r) => r.json())
       .then((data) => {
-        if (!data.success) router.push('/auth');
+        if (!data.authenticated) router.push('/auth');
         else setChecked(true);
-      });
+      })
+      .catch(() => router.push('/auth'));
   }, [router]);
 
   if (!checked) {

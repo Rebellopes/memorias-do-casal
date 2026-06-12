@@ -17,6 +17,9 @@ export const metadata: Metadata = {
     template: '%s — Nossas Memórias',
   },
   description: 'Uma cápsula do tempo digital do nosso amor',
+  icons: {
+    icon: '/favicon.jpg',
+  },
   openGraph: {
     title: 'Nossas Memórias',
     description: 'Uma cápsula do tempo digital do nosso amor',
