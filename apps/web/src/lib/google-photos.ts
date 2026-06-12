@@ -60,7 +60,12 @@ export async function getValidGoogleToken() {
 export function getGoogleAuthUrl(siteUrl?: string) {
   const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
 
-  const scope = 'https://www.googleapis.com/auth/photoslibrary';
+  const scope = [
+    'openid',
+    'email',
+    'profile',
+    'https://www.googleapis.com/auth/photoslibrary.readonly',
+  ].join(' ');
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
@@ -69,6 +74,7 @@ export function getGoogleAuthUrl(siteUrl?: string) {
     scope,
     access_type: 'offline',
     prompt: 'consent',
+    include_granted_scopes: 'true',
   });
 
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
