@@ -60,10 +60,7 @@ export async function getValidGoogleToken() {
 export function getGoogleAuthUrl(siteUrl?: string) {
   const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
 
-  const scope = [
-    'https://www.googleapis.com/auth/photoslibrary',
-    'https://www.googleapis.com/auth/photoslibrary.sharing',
-  ].join(' ');
+  const scope = 'https://www.googleapis.com/auth/photoslibrary';
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
@@ -258,11 +255,7 @@ export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Pro
     if (result.type === 'albumId') {
       resolvedId = result.value;
     } else {
-      const joined = await joinSharedAlbum(result.value);
-      if (joined.error || !joined.albumId) {
-        return { synced: 0, error: `Não foi possível acessar o álbum compartilhado. ${joined.error || ''}` };
-      }
-      resolvedId = joined.albumId;
+      return { synced: 0, error: 'Este é um link de álbum compartilhado. A API do Google não permite mais acessar álbuns compartilhados. Conecte o Google com a conta DONA do álbum e cole o URL direto do álbum (photos.google.com/album/...).' };
     }
   }
 
