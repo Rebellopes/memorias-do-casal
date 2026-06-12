@@ -1,0 +1,8 @@
+{
+  "name": "@memorias/config-tailwind",
+  "private": true,
+  "main": "tailwind.config.ts",
+  "dependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
