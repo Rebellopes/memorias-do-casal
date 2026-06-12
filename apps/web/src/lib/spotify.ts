@@ -145,6 +145,7 @@ export function getSpotifyAuthUrl(usuario: string, siteUrl?: string) {
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: scopes,
+    show_dialog: 'true',
   });
 
   return `https://accounts.spotify.com/authorize?${params}&state=${encodeURIComponent(usuario)}`;

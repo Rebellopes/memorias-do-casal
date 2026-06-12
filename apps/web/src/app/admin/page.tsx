@@ -187,6 +187,7 @@ function AdminDashboard() {
                 })}
             </div>
             {spotifyPersons.length === 0 && <p className="mt-3 text-xs text-stone-400">Clique em um dos botões para autorizar o Spotify. Você será redirecionado e depois voltará para cá.</p>}
+            {spotifyPersons.length === 1 && <p className="mt-3 text-xs text-stone-400">Para conectar a segunda conta, use um navegador diferente ou clique em "Log out" na tela de autorização do Spotify para trocar de usuário.</p>}
           </div>
 
         <div className="rounded-xl border border-stone-200 p-4 sm:p-6 dark:border-stone-700">
