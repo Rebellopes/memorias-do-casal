@@ -60,11 +60,16 @@ export async function getValidGoogleToken() {
 export function getGoogleAuthUrl(siteUrl?: string) {
   const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
 
+  const scope = [
+    'https://www.googleapis.com/auth/photoslibrary',
+    'https://www.googleapis.com/auth/photoslibrary.sharing',
+  ].join(' ');
+
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'https://www.googleapis.com/auth/photoslibrary.readonly',
+    scope,
     access_type: 'offline',
     prompt: 'consent',
   });
@@ -162,26 +167,31 @@ export async function listAlbums(): Promise<{ albums: GoogleAlbum[]; error?: str
   return { albums: allAlbums };
 }
 
-export async function resolveGoogleUrl(input: string): Promise<string | undefined> {
-  let url = input.trim();
+export async function resolveGoogleUrl(input: string): Promise<{ type: 'albumId' | 'shareToken'; value: string } | undefined> {
+  const url = input.trim();
 
-  if (/^[A-Za-z0-9_-]{20,}$/.test(url) && !url.includes('/')) return url;
+  const albumIdPattern = /^[A-Za-z0-9_-]{20,}$/;
+  if (albumIdPattern.test(url) && !url.includes('/')) {
+    return { type: 'albumId', value: url };
+  }
 
   const albumMatch = url.match(/\/album\/([A-Za-z0-9_-]+)/);
-  if (albumMatch) return albumMatch[1];
+  if (albumMatch?.[1]) return { type: 'albumId', value: albumMatch[1] };
 
   const shareMatch = url.match(/\/share\/([A-Za-z0-9_-]+)/);
-  if (shareMatch) return shareMatch[1];
+  if (shareMatch?.[1]) return { type: 'shareToken', value: shareMatch[1] };
 
   if (url.includes('goo.gl') || url.includes('photos.app.goo.gl')) {
     try {
       const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
       const resolved = res.url;
-      const shareMatch2 = resolved.match(/\/share\/([A-Za-z0-9_-]+)/);
-      if (shareMatch2) return shareMatch2[1];
-      const albumMatch2 = resolved.match(/\/album\/([A-Za-z0-9_-]+)/);
-      if (albumMatch2) return albumMatch2[1];
-    } catch { return undefined; }
+      const sm = resolved.match(/\/share\/([A-Za-z0-9_-]+)/);
+      if (sm?.[1]) return { type: 'shareToken', value: sm[1] };
+      const am = resolved.match(/\/album\/([A-Za-z0-9_-]+)/);
+      if (am?.[1]) return { type: 'albumId', value: am[1] };
+    } catch {
+      return undefined;
+    }
   }
 
   return undefined;
@@ -200,25 +210,35 @@ export async function joinSharedAlbum(shareToken: string): Promise<string | unde
     body: JSON.stringify({ shareToken }),
   });
 
-  if (!res.ok) return undefined;
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    console.error(`Failed to join shared album (${res.status}): ${body}`);
+    return undefined;
+  }
 
   const data = await res.json() as { album: { id: string } };
   return data.album?.id;
 }
 
-export async function syncGooglePhotos(albumId?: string, albumUrl?: string) {
+export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Promise<{ synced: number; error?: string }> {
   const token = await getValidGoogleToken();
-  if (!token) return { synced: 0, error: 'Not authenticated' };
+  if (!token) return { synced: 0, error: 'Não conectado ao Google Fotos' };
 
   let resolvedId = albumId;
 
   if (!resolvedId && albumUrl) {
-    const shareToken = await resolveGoogleUrl(albumUrl);
-    if (shareToken && !/^[A-Za-z0-9_-]{20,}$/.test(shareToken)) {
-      resolvedId = shareToken;
-    } else if (shareToken && /^[A-Za-z0-9_-]{20,}$/.test(shareToken)) {
-      const joined = await joinSharedAlbum(shareToken);
-      if (joined) resolvedId = joined;
+    const result = await resolveGoogleUrl(albumUrl);
+    if (!result) {
+      return { synced: 0, error: 'Não foi possível interpretar o link do álbum. Use o link de compartilhamento do Google Fotos.' };
+    }
+    if (result.type === 'albumId') {
+      resolvedId = result.value;
+    } else {
+      const joined = await joinSharedAlbum(result.value);
+      if (!joined) {
+        return { synced: 0, error: 'Não foi possível acessar o álbum compartilhado. Certifique-se de que o link está correto e que você autorizou o acesso a álbuns compartilhados.' };
+      }
+      resolvedId = joined;
     }
   }
 
@@ -248,7 +268,9 @@ export async function syncGooglePhotos(albumId?: string, albumUrl?: string) {
       body: JSON.stringify(body),
     });
 
-    if (!res.ok) break;
+    if (!res.ok) {
+      return { synced, error: `Erro ao buscar fotos (${res.status})` };
+    }
 
     const data = (await res.json()) as GoogleMediaItemsResponse;
     nextPageToken = data.nextPageToken;

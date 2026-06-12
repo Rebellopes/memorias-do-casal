@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 import { exchangeSpotifyCode } from '@/lib/spotify';
 
 export async function GET(request: Request) {
@@ -16,5 +16,5 @@ export async function GET(request: Request) {
     return new Response('Failed to exchange code', { status: 500 });
   }
 
-  redirect('/admin');
+  return NextResponse.redirect(new URL('/admin', siteUrl));
 }
