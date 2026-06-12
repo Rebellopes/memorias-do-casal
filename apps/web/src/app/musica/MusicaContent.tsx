@@ -33,21 +33,21 @@ export function MusicaContent() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="mb-4 text-center text-4xl font-bold text-stone-900 dark:text-stone-100">
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
+      <h1 className="mb-4 text-center text-3xl sm:text-4xl font-bold text-stone-900 dark:text-stone-100">
         Música
       </h1>
-      <p className="mb-12 text-center text-stone-400">
+      <p className="mb-8 sm:mb-12 text-center text-stone-400">
         Atividade musical do casal
       </p>
 
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2">
         {persons.map((person) => (
           <div
             key={person.usuario}
-            className="rounded-xl border border-stone-100 bg-stone-50 p-6 dark:border-stone-800 dark:bg-stone-900/50"
+            className="rounded-xl border border-stone-100 bg-stone-50 p-4 sm:p-6 dark:border-stone-800 dark:bg-stone-900/50"
           >
-            <h3 className="mb-4 text-xl font-bold text-stone-700 dark:text-stone-300">
+            <h3 className="mb-4 text-lg sm:text-xl font-bold text-stone-700 dark:text-stone-300">
               {person.usuario}
             </h3>
 
@@ -56,9 +56,9 @@ export function MusicaContent() {
                 href={person.status.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex gap-4 transition-opacity hover:opacity-80"
+                className="flex gap-3 sm:gap-4 transition-opacity hover:opacity-80"
               >
-                <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-stone-200 dark:bg-stone-800">
+                <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-xl bg-stone-200 dark:bg-stone-800">
                   {person.status.capa && (
                     <Image
                       src={person.status.capa}
@@ -69,12 +69,12 @@ export function MusicaContent() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-lg font-bold text-stone-900 dark:text-stone-100">{person.status.musica}</p>
-                  <p className="text-stone-500 dark:text-stone-400">{person.status.artista}</p>
-                  <p className="mt-1 text-sm text-stone-400">{person.status.album}</p>
+                  <p className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 truncate">{person.status.musica}</p>
+                  <p className="text-sm sm:text-base text-stone-500 dark:text-stone-400 truncate">{person.status.artista}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-stone-400 truncate">{person.status.album}</p>
 
                   {person.status.reproduzindo_agora ? (
-                    <span className="mt-3 inline-block rounded-full bg-rose-100 px-3 py-1 text-sm font-medium text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
+                    <span className="mt-3 inline-block rounded-full bg-rose-100 px-3 py-1 text-xs sm:text-sm font-medium text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
                       Ouvindo Agora
                     </span>
                   ) : person.status.ultima_reproducao ? (

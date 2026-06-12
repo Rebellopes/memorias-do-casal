@@ -92,39 +92,39 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="mb-12 text-4xl font-bold text-stone-900 dark:text-stone-100">Admin</h1>
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
+      <h1 className="mb-8 sm:mb-12 text-3xl sm:text-4xl font-bold text-stone-900 dark:text-stone-100">Admin</h1>
 
-      <div className="mb-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/admin/dedicatorias" className="rounded-xl border border-stone-200 p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
-          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">Dedicatórias</h3>
-          <p className="mt-1 text-sm text-stone-400">Gerenciar mensagens</p>
+      <div className="mb-8 sm:mb-12 grid gap-4 sm:gap-5 grid-cols-2 lg:grid-cols-4">
+        <Link href="/admin/dedicatorias" className="rounded-xl border border-stone-200 p-4 sm:p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
+          <h3 className="text-base sm:text-lg font-bold text-stone-800 dark:text-stone-200">Dedicatórias</h3>
+          <p className="mt-1 text-xs sm:text-sm text-stone-400">Gerenciar mensagens</p>
         </Link>
-        <Link href="/admin/galeria" className="rounded-xl border border-stone-200 p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
-          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">Galeria</h3>
-          <p className="mt-1 text-sm text-stone-400">Upload de fotos</p>
+        <Link href="/admin/galeria" className="rounded-xl border border-stone-200 p-4 sm:p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
+          <h3 className="text-base sm:text-lg font-bold text-stone-800 dark:text-stone-200">Galeria</h3>
+          <p className="mt-1 text-xs sm:text-sm text-stone-400">Upload de fotos</p>
         </Link>
-        <Link href="/admin/eventos" className="rounded-xl border border-stone-200 p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
-          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">Eventos</h3>
-          <p className="mt-1 text-sm text-stone-400">Linha do tempo</p>
+        <Link href="/admin/eventos" className="rounded-xl border border-stone-200 p-4 sm:p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
+          <h3 className="text-base sm:text-lg font-bold text-stone-800 dark:text-stone-200">Eventos</h3>
+          <p className="mt-1 text-xs sm:text-sm text-stone-400">Linha do tempo</p>
         </Link>
-        <Link href="/admin/recados" className="rounded-xl border border-stone-200 p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
-          <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">Recados</h3>
-          <p className="mt-1 text-sm text-stone-400">Mensagem diária</p>
+        <Link href="/admin/recados" className="rounded-xl border border-stone-200 p-4 sm:p-6 font-medium transition-colors hover:border-rose-200 dark:border-stone-700">
+          <h3 className="text-base sm:text-lg font-bold text-stone-800 dark:text-stone-200">Recados</h3>
+          <p className="mt-1 text-xs sm:text-sm text-stone-400">Mensagem diária</p>
         </Link>
       </div>
 
-      <div className="space-y-8">
-        <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
+      <div className="space-y-6 sm:space-y-8">
+        <div className="rounded-xl border border-stone-200 p-4 sm:p-6 dark:border-stone-700">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">🖼️</div>
             <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Foto Principal da Home</h2>
-              <p className="text-sm text-stone-500">URL da foto que aparece no círculo central</p>
+              <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-200">Foto Principal da Home</h2>
+              <p className="text-xs sm:text-sm text-stone-500">URL da foto que aparece no círculo central</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row flex-wrap items-end gap-3">
+            <div className="w-full sm:flex-1">
               <input
                 type="url"
                 value={homePhoto}
@@ -136,7 +136,7 @@ function AdminDashboard() {
             <button
               onClick={saveHomePhoto}
               disabled={savingPhoto}
-              className="rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-50"
+              className="w-full sm:w-auto rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-50"
             >
               {savingPhoto ? 'Salvando...' : 'Salvar'}
             </button>
@@ -152,58 +152,49 @@ function AdminDashboard() {
           )}
         </div>
 
-          <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
+          <div className="rounded-xl border border-stone-200 p-4 sm:p-6 dark:border-stone-700">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954]/10 text-lg">🎵</div>
               <div>
-                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Spotify</h2>
-                <p className="text-sm text-stone-500">Compartilhe a atividade musical de cada um</p>
+                <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-200">Spotify</h2>
+                <p className="text-xs sm:text-sm text-stone-500">Compartilhe a atividade musical de cada um</p>
               </div>
               {spotifyPersons.length > 0 && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Conectado</span>}
             </div>
             <div className="flex flex-wrap gap-3">
-              {['Pessoa A', 'Pessoa B'].map((slot) =>
-                spotifyPersons.includes(slot) ? (
-                  <button
-                    key={slot}
-                    onClick={() => disconnectSpotify(slot)}
-                    disabled={disconnecting === slot}
-                    className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                  >
-                    {disconnecting === slot ? 'Desconectando...' : `Desconectar ${slot}`}
-                  </button>
-                ) : (
-                  <a
-                    key={slot}
-                    href={spotifyAuthUrls[slot] || '#'}
-                    className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
-                  >
-                    Conectar {slot}
-                  </a>
-                )
-              )}
-              {spotifyPersons
-                .filter((p) => !['Pessoa A', 'Pessoa B'].includes(p))
-                .map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => disconnectSpotify(p)}
-                    disabled={disconnecting === p}
-                    className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                  >
-                    {disconnecting === p ? 'Desconectando...' : `Desconectar ${p}`}
-                  </button>
-                ))}
+              {spotifyPersons.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => disconnectSpotify(p)}
+                  disabled={disconnecting === p}
+                  className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {disconnecting === p ? 'Desconectando...' : `Desconectar ${p}`}
+                </button>
+              ))}
+              {spotifyPersons.length < 2 &&
+                Array.from({ length: 2 - spotifyPersons.length }).map((_, i) => {
+                  const slot = `Pessoa ${i === 0 ? 'A' : 'B'}`;
+                  return (
+                    <a
+                      key={slot}
+                      href={spotifyAuthUrls[slot] || '#'}
+                      className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
+                    >
+                      Conectar {slot}
+                    </a>
+                  );
+                })}
             </div>
             {spotifyPersons.length === 0 && <p className="mt-3 text-xs text-stone-400">Clique em um dos botões para autorizar o Spotify. Você será redirecionado e depois voltará para cá.</p>}
           </div>
 
-        <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
+        <div className="rounded-xl border border-stone-200 p-4 sm:p-6 dark:border-stone-700">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">📸</div>
             <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Google Fotos</h2>
-              <p className="text-sm text-stone-500">Busca fotos de um álbum público (sem OAuth)</p>
+              <h2 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-200">Google Fotos</h2>
+              <p className="text-xs sm:text-sm text-stone-500">Busca fotos de um álbum público (sem OAuth)</p>
             </div>
           </div>
 
@@ -211,8 +202,8 @@ function AdminDashboard() {
             <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-1">
               Link do álbum compartilhado (photos.app.goo.gl/...)
             </label>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-end gap-3">
+              <div className="w-full sm:flex-1">
                 <input
                   type="url"
                   value={googleAlbumUrl}
@@ -224,7 +215,7 @@ function AdminDashboard() {
               <button
                 onClick={saveAlbumUrl}
                 disabled={savingAlbumUrl}
-                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold text-stone-700 hover:bg-stone-50 disabled:opacity-50 dark:border-stone-600 dark:text-stone-300"
+                className="w-full sm:w-auto rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold text-stone-700 hover:bg-stone-50 disabled:opacity-50 dark:border-stone-600 dark:text-stone-300"
               >
                 {savingAlbumUrl ? 'Salvando...' : 'Salvar'}
               </button>
@@ -235,11 +226,11 @@ function AdminDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <button
               onClick={handleGoogleSync}
               disabled={syncing}
-              className="rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-50"
+              className="w-full sm:w-auto rounded-lg bg-rose-500 px-5 py-2 text-sm font-bold text-white hover:bg-rose-600 disabled:opacity-50"
             >
               {syncing ? 'Sincronizando...' : 'Sincronizar Agora'}
             </button>

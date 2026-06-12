@@ -95,15 +95,15 @@ export function HomeContent() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">
       <section className="mb-20 text-center">
-        <div className={`mx-auto mb-8 overflow-hidden rounded-full bg-stone-100 shadow-inner ${homePhoto ? 'h-72 w-72' : 'h-48 w-48'}`}>
+        <div className={`mx-auto mb-8 overflow-hidden rounded-full bg-stone-100 shadow-inner ${homePhoto ? 'h-48 w-48 sm:h-72 sm:w-72' : 'h-32 w-32 sm:h-48 sm:w-48'}`}>
           {homePhoto ? (
             <img src={homePhoto} alt="Nossas Memórias" className="h-full w-full object-cover" />
           ) : null}
         </div>
-        <h1 className="mb-2 font-serif text-5xl font-bold tracking-tight text-stone-900">
+        <h1 className="mb-2 font-serif text-3xl sm:text-5xl font-bold tracking-tight text-stone-900">
           Nossas Memórias
         </h1>
-        <p className="mb-6 font-serif text-xl text-stone-400">Desde 15 de Junho de 2023</p>
+        <p className="mb-6 font-serif text-lg sm:text-xl text-stone-400">Desde 15 de Junho de 2023</p>
         <TimeCounter startDate={START_DATE} />
 
         {dailyMessage && (
