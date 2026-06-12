@@ -154,9 +154,12 @@ function AdminDashboard() {
           </div>
           <div className="flex flex-wrap gap-3">
             {!spotifyPersons.includes('Pessoa A') ? (
-              <a href="/api/spotify/auth?usuario=Pessoa A" className="rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90">
+              <button
+                onClick={() => window.location.href = '/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa A')}
+                className="rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
+              >
                 Conectar Pessoa A
-              </a>
+              </button>
             ) : (
               <button
                 onClick={() => disconnectSpotify('Pessoa A')}
@@ -167,9 +170,12 @@ function AdminDashboard() {
               </button>
             )}
             {!spotifyPersons.includes('Pessoa B') ? (
-              <a href="/api/spotify/auth?usuario=Pessoa B" className="rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5">
+              <button
+                onClick={() => window.location.href = '/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa B')}
+                className="rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5"
+              >
                 Conectar Pessoa B
-              </a>
+              </button>
             ) : (
               <button
                 onClick={() => disconnectSpotify('Pessoa B')}
