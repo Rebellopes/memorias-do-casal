@@ -166,8 +166,6 @@ function AdminDashboard() {
             {!spotifyPersons.includes('Pessoa A') ? (
               <a
                 href={spotifyAuthUrls['Pessoa A'] || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
               >
                 Conectar Pessoa A
@@ -184,8 +182,6 @@ function AdminDashboard() {
             {!spotifyPersons.includes('Pessoa B') ? (
               <a
                 href={spotifyAuthUrls['Pessoa B'] || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="inline-block rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5"
               >
                 Conectar Pessoa B

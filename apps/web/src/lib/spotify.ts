@@ -143,10 +143,9 @@ export function getSpotifyAuthUrl(usuario: string, siteUrl?: string) {
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: scopes,
-    state: usuario,
   });
 
-  return `https://accounts.spotify.com/authorize?${params}`;
+  return `https://accounts.spotify.com/authorize?${params}&state=${encodeURIComponent(usuario)}`;
 }
 
 export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl?: string): Promise<{ error?: string } | null> {

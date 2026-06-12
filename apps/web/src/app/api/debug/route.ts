@@ -17,6 +17,15 @@ export async function GET() {
   checks.tokens = tokens;
   checks.queryError = queryError;
 
+  const { error: deleteBadError } = await supabaseAdmin
+    .from('integration_tokens')
+    .delete()
+    .eq('provider', 'spotify')
+    .in('usuario', ['Pessoa+A', 'Pessoa+B', 'default', '__test__']);
+
+  checks.deletedBadTokens = !deleteBadError;
+  checks.deleteBadError = deleteBadError;
+
   const { error: insertError } = await supabaseAdmin
     .from('integration_tokens')
     .upsert(
