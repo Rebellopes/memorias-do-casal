@@ -154,12 +154,12 @@ function AdminDashboard() {
           </div>
           <div className="flex flex-wrap gap-3">
             {!spotifyPersons.includes('Pessoa A') ? (
-              <form action="/api/spotify/auth" method="GET">
-                <input type="hidden" name="usuario" value="Pessoa A" />
-                <button type="submit" className="rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90">
-                  Conectar Pessoa A
-                </button>
-              </form>
+              <a
+                href={'/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa A')}
+                className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
+              >
+                Conectar Pessoa A
+              </a>
             ) : (
               <button
                 onClick={() => disconnectSpotify('Pessoa A')}
@@ -170,12 +170,12 @@ function AdminDashboard() {
               </button>
             )}
             {!spotifyPersons.includes('Pessoa B') ? (
-              <form action="/api/spotify/auth" method="GET">
-                <input type="hidden" name="usuario" value="Pessoa B" />
-                <button type="submit" className="rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5">
-                  Conectar Pessoa B
-                </button>
-              </form>
+              <a
+                href={'/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa B')}
+                className="inline-block rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5"
+              >
+                Conectar Pessoa B
+              </a>
             ) : (
               <button
                 onClick={() => disconnectSpotify('Pessoa B')}
