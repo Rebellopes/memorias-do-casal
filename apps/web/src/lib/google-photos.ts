@@ -154,7 +154,11 @@ export async function listAlbums(): Promise<{ albums: GoogleAlbum[]; error?: str
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    if (!res.ok) return { albums: allAlbums, error: 'Failed to list albums' };
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+      const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
+      return { albums: allAlbums, error: `Google API (${res.status}): ${msg}` };
+    }
 
     const data = (await res.json()) as GoogleAlbumsResponse;
     if (data.albums) allAlbums.push(...data.albums);
