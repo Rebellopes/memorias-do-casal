@@ -149,7 +149,7 @@ export function getSpotifyAuthUrl(usuario: string, siteUrl?: string) {
   return `https://accounts.spotify.com/authorize?${params}`;
 }
 
-export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl?: string) {
+export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl?: string): Promise<{ error?: string } | null> {
   const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/spotify/callback`;
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
@@ -165,7 +165,10 @@ export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl
     }),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const errText = await res.text();
+    return { error: `Spotify token error ${res.status}: ${errText}` };
+  }
 
   const data = await res.json();
   const expiresAt = new Date(Date.now() + data.expires_in * 1000);
@@ -181,5 +184,6 @@ export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl
     { onConflict: 'provider,usuario' },
   );
 
-  return error ? null : true;
+  if (error) return { error: `Supabase upsert error: ${error.message}` };
+  return {};
 }
