@@ -10,7 +10,8 @@
     "SPOTIFY_CLIENT_SECRET",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
-    "GOOGLE_ALBUM_ID"
+    "GOOGLE_ALBUM_ID",
+    "ADMIN_PASSWORD"
   ],
   "tasks": {
     "build": {

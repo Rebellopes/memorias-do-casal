@@ -38,6 +38,7 @@ export function HomeContent() {
   const [latestDedication, setLatestDedication] = useState<Dedication | null>(null);
   const [dailyMessage, setDailyMessage] = useState<DailyMessage | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [homePhoto, setHomePhoto] = useState('');
 
   useEffect(() => {
     fetch('/api/dedications')
@@ -53,12 +54,20 @@ export function HomeContent() {
     fetch('/api/today-in-years')
       .then((r) => r.json())
       .then(setTimeline);
+
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => { if (d.home_photo) setHomePhoto(d.home_photo); });
   }, []);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16">
       <section className="mb-20 text-center">
-        <div className="mx-auto mb-8 h-72 w-72 overflow-hidden rounded-full bg-stone-100 shadow-inner" />
+        <div className={`mx-auto mb-8 overflow-hidden rounded-full bg-stone-100 shadow-inner ${homePhoto ? 'h-72 w-72' : 'h-48 w-48'}`}>
+          {homePhoto ? (
+            <img src={homePhoto} alt="Nossas Memórias" className="h-full w-full object-cover" />
+          ) : null}
+        </div>
         <h1 className="mb-2 font-serif text-5xl font-bold tracking-tight text-stone-900">
           Nossas Memórias
         </h1>

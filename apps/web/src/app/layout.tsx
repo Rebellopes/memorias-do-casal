@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond } from 'next/font/google';
-import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Header } from '@/components/Header';
 import './globals.css';
@@ -32,10 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={cormorant.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-white text-stone-900 antialiased transition-colors dark:bg-stone-950 dark:text-stone-100">
         <ThemeProvider>
-          <AuthProvider>
-            <Header />
-            <main>{children}</main>
-          </AuthProvider>
+          <Header />
+          <main>{children}</main>
         </ThemeProvider>
       </body>
     </html>
