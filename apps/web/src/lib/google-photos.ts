@@ -1,276 +1,48 @@
 import { supabaseAdmin } from './supabase-admin';
 
-const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const GOOGLE_PHOTOS_API = 'https://photoslibrary.googleapis.com/v1';
-
-export async function getGoogleTokens() {
-  const { data, error } = await supabaseAdmin
-    .from('integration_tokens')
-    .select('*')
-    .eq('provider', 'google_photos')
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return data;
+export interface SharedAlbumImage {
+  uid: string;
+  url: string;
+  width: number;
+  height: number;
+  imageUpdateDate: number;
+  albumAddDate: number;
 }
 
-async function refreshGoogleToken(refreshToken: string) {
-  const res = await fetch(GOOGLE_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
-    }),
-  });
+export async function fetchAlbumImages(
+  albumUrl: string,
+): Promise<{ images: SharedAlbumImage[]; error?: string }> {
+  try {
+    const { fetchImageUrls } = await import('google-photos-album-image-url-fetch');
+    const images = await fetchImageUrls(albumUrl);
 
-  if (!res.ok) return null;
-  return res.json() as Promise<{ access_token: string; expires_in: number }>;
-}
-
-export async function getValidGoogleToken() {
-  const tokens = await getGoogleTokens();
-  if (!tokens) return null;
-
-  const now = new Date();
-  const expiresAt = new Date(tokens.expires_at);
-
-  if (now >= expiresAt) {
-    const refreshed = await refreshGoogleToken(tokens.refresh_token);
-    if (!refreshed) return null;
-
-    const newExpires = new Date(now.getTime() + refreshed.expires_in * 1000);
-
-    await supabaseAdmin
-      .from('integration_tokens')
-      .update({
-        access_token: refreshed.access_token,
-        expires_at: newExpires.toISOString(),
-      })
-      .eq('id', tokens.id);
-
-    return refreshed.access_token;
-  }
-
-  return tokens.access_token;
-}
-
-export function getGoogleAuthUrl(siteUrl?: string) {
-  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
-
-  const scope = [
-    'openid',
-    'email',
-    'profile',
-    'https://www.googleapis.com/auth/photoslibrary.readonly',
-  ].join(' ');
-
-  const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_CLIENT_ID!,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope,
-    access_type: 'offline',
-    prompt: 'consent',
-    include_granted_scopes: 'true',
-  });
-
-  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-}
-
-export async function exchangeGoogleCode(code: string, siteUrl?: string) {
-  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
-
-  const res = await fetch(GOOGLE_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-    }),
-  });
-
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  if (!data.refresh_token) return null;
-
-  const expiresAt = new Date(Date.now() + data.expires_in * 1000);
-
-  const { error } = await supabaseAdmin.from('integration_tokens').upsert(
-    {
-      provider: 'google_photos',
-      usuario: 'default',
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: expiresAt.toISOString(),
-    },
-    { onConflict: 'provider,usuario' },
-  );
-
-  return error ? null : true;
-}
-
-interface GoogleMediaItem {
-  id: string;
-  filename: string;
-  mimeType: string;
-  mediaMetadata: {
-    creationTime: string;
-    width: string;
-    height: string;
-  };
-  baseUrl: string;
-}
-
-interface GoogleMediaItemsResponse {
-  mediaItems?: GoogleMediaItem[];
-  nextPageToken?: string;
-}
-
-export interface GoogleAlbum {
-  id: string;
-  title: string;
-  mediaItemsCount: string;
-  coverPhotoBaseUrl?: string;
-}
-
-interface GoogleAlbumsResponse {
-  albums?: GoogleAlbum[];
-  nextPageToken?: string;
-}
-
-export async function listAlbums(): Promise<{ albums: GoogleAlbum[]; error?: string }> {
-  const token = await getValidGoogleToken();
-  if (!token) return { albums: [], error: 'Not authenticated' };
-
-  const allAlbums: GoogleAlbum[] = [];
-  let nextPageToken: string | undefined;
-
-  do {
-    const params = new URLSearchParams({ pageSize: '50' });
-    if (nextPageToken) params.set('pageToken', nextPageToken);
-
-    const res = await fetch(`${GOOGLE_PHOTOS_API}/albums?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
-      const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
-      return { albums: allAlbums, error: `Google API (${res.status}): ${msg}` };
+    if (!images || images.length === 0) {
+      return {
+        images: [],
+        error:
+          'Nenhuma foto encontrada. Verifique se o álbum é público (compartilhado com link).',
+      };
     }
 
-    const data = (await res.json()) as GoogleAlbumsResponse;
-    if (data.albums) allAlbums.push(...data.albums);
-    nextPageToken = data.nextPageToken;
-  } while (nextPageToken);
-
-  return { albums: allAlbums };
+    return { images: images as SharedAlbumImage[] };
+  } catch (err) {
+    return {
+      images: [],
+      error: `Erro ao buscar fotos: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 }
 
-export async function resolveGoogleUrl(input: string): Promise<{ type: 'albumId' | 'shareToken'; value: string } | undefined> {
-  const url = input.trim();
-
-  const albumIdPattern = /^[A-Za-z0-9_-]{20,}$/;
-  if (albumIdPattern.test(url) && !url.includes('/')) {
-    return { type: 'albumId', value: url };
+export async function syncGooglePhotos(
+  albumUrl: string,
+): Promise<{ synced: number; error?: string }> {
+  if (!albumUrl) {
+    return { synced: 0, error: 'URL do álbum não fornecida' };
   }
 
-  const albumMatch = url.match(/\/album\/([A-Za-z0-9_-]+)/);
-  if (albumMatch?.[1]) return { type: 'albumId', value: albumMatch[1] };
-
-  const shareMatch = url.match(/\/share\/([A-Za-z0-9_-]+)/);
-  if (shareMatch?.[1]) return { type: 'shareToken', value: shareMatch[1] };
-
-  if (url.includes('goo.gl') || url.includes('photos.app.goo.gl')) {
-    try {
-      const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-      const resolved = res.url;
-      const sm = resolved.match(/\/share\/([A-Za-z0-9_-]+)/);
-      if (sm?.[1]) return { type: 'shareToken', value: sm[1] };
-      const am = resolved.match(/\/album\/([A-Za-z0-9_-]+)/);
-      if (am?.[1]) return { type: 'albumId', value: am[1] };
-    } catch {
-      return undefined;
-    }
-  }
-
-  return undefined;
-}
-
-export async function joinSharedAlbum(shareToken: string): Promise<{ albumId?: string; error?: string }> {
-  const token = await getValidGoogleToken();
-  if (!token) return { error: 'Não autenticado no Google' };
-
-  const res = await fetch(`${GOOGLE_PHOTOS_API}/sharedAlbums:join`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ shareToken }),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
-    const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
-    return { error: `Google API: ${msg}` };
-  }
-
-  const data = await res.json() as { album: { id: string } };
-  if (!data.album?.id) return { error: 'Álbum não encontrado na resposta' };
-  return { albumId: data.album.id };
-}
-
-export async function listSharedAlbums(): Promise<{ albums: Array<{ id: string; title: string; shareToken?: string }>; error?: string }> {
-  const token = await getValidGoogleToken();
-  if (!token) return { albums: [], error: 'Não autenticado' };
-
-  const res = await fetch(`${GOOGLE_PHOTOS_API}/sharedAlbums?pageSize=50`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
-    const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
-    return { albums: [], error: `Google API: ${msg}` };
-  }
-
-  const data = await res.json() as { sharedAlbums?: Array<{ id: string; title: string; shareInfo?: { shareToken?: string } }> };
-  if (!data.sharedAlbums) return { albums: [] };
-  return {
-    albums: data.sharedAlbums
-      .filter(a => a.id)
-      .map(a => ({ id: a.id, title: a.title, shareToken: a.shareInfo?.shareToken })),
-  };
-}
-
-export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Promise<{ synced: number; error?: string }> {
-  const token = await getValidGoogleToken();
-  if (!token) return { synced: 0, error: 'Não conectado ao Google Fotos' };
-
-  let resolvedId = albumId;
-
-  if (!resolvedId && albumUrl) {
-    const result = await resolveGoogleUrl(albumUrl);
-    if (!result) {
-      return { synced: 0, error: 'Não foi possível interpretar o link do álbum. Use o link de compartilhamento do Google Fotos.' };
-    }
-    if (result.type === 'albumId') {
-      resolvedId = result.value;
-    } else {
-      return { synced: 0, error: 'Este é um link de álbum compartilhado. A API do Google não permite mais acessar álbuns compartilhados. Conecte o Google com a conta DONA do álbum e cole o URL direto do álbum (photos.google.com/album/...).' };
-    }
-  }
-
-  let synced = 0;
-  let nextPageToken: string | undefined;
+  const { images, error } = await fetchAlbumImages(albumUrl);
+  if (error) return { synced: 0, error };
+  if (images.length === 0) return { synced: 0 };
 
   const { data: existing } = await supabaseAdmin
     .from('photos')
@@ -279,49 +51,29 @@ export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Pro
 
   const existingUrls = new Set(existing?.map((p) => p.image_url) ?? []);
 
-  do {
-    const body: Record<string, unknown> = {
-      pageSize: 50,
-    };
-    if (resolvedId) body.albumId = resolvedId;
-    if (nextPageToken) body.pageToken = nextPageToken;
+  const newPhotos = images
+    .filter((img) => {
+      const fullUrl = `${img.url}=w${img.width}-h${img.height}`;
+      return !existingUrls.has(fullUrl);
+    })
+    .map((img) => ({
+      image_url: `${img.url}=w${img.width}-h${img.height}`,
+      data_foto:
+        new Date(img.imageUpdateDate).toISOString().slice(0, 10) ||
+        new Date().toISOString().slice(0, 10),
+      source: 'google_photos' as const,
+      descricao: null,
+    }));
 
-    const res = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems:search`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
+  if (newPhotos.length === 0) return { synced: 0 };
 
-    if (!res.ok) {
-      return { synced, error: `Erro ao buscar fotos (${res.status})` };
-    }
+  const { error: insertError } = await supabaseAdmin
+    .from('photos')
+    .insert(newPhotos);
 
-    const data = (await res.json()) as GoogleMediaItemsResponse;
-    nextPageToken = data.nextPageToken;
+  if (insertError) {
+    return { synced: 0, error: `Erro ao salvar fotos: ${insertError.message}` };
+  }
 
-    if (!data.mediaItems) break;
-
-    const newPhotos = data.mediaItems
-      .filter((item) => item.mimeType.startsWith('image/'))
-      .filter((item) => {
-        const url = `${item.baseUrl}=d`;
-        return !existingUrls.has(url);
-      })
-      .map((item) => ({
-        image_url: `${item.baseUrl}=d`,
-        data_foto: item.mediaMetadata.creationTime.slice(0, 10) || new Date().toISOString().slice(0, 10),
-        source: 'google_photos' as const,
-        descricao: item.filename,
-      }));
-
-    if (newPhotos.length > 0) {
-      const { error } = await supabaseAdmin.from('photos').insert(newPhotos);
-      if (!error) synced += newPhotos.length;
-    }
-  } while (nextPageToken);
-
-  return { synced };
+  return { synced: newPhotos.length };
 }

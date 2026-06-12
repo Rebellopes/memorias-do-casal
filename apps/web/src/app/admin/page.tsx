@@ -9,7 +9,6 @@ function AdminDashboard() {
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
 
-  const [googleConnected, setGoogleConnected] = useState(false);
   const [googleAlbumUrl, setGoogleAlbumUrl] = useState('');
   const [savingAlbumUrl, setSavingAlbumUrl] = useState(false);
   const [albumUrlMsg, setAlbumUrlMsg] = useState<string | null>(null);
@@ -20,9 +19,6 @@ function AdminDashboard() {
 
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
-  const [albums, setAlbums] = useState<Array<{ id: string; title: string; mediaItemsCount?: string }>>([]);
-  const [loadingAlbums, setLoadingAlbums] = useState(false);
-  const [albumsMsg, setAlbumsMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((d) => {
@@ -37,10 +33,6 @@ function AdminDashboard() {
         setSpotifyConnected(connected.length > 0);
       }
     });
-
-    fetch('/api/google/albums').then((r) => r.json()).then((data) => {
-      if (data.albums || !data.error) setGoogleConnected(true);
-    }).catch(() => {});
   }, []);
 
   const saveHomePhoto = async () => {
@@ -75,43 +67,6 @@ function AdminDashboard() {
     setDisconnecting(null);
   };
 
-  const disconnectGoogle = async () => {
-    await fetch('/api/google/tokens', { method: 'DELETE' });
-    setGoogleConnected(false);
-  };
-
-  const handleListAlbums = async () => {
-    setLoadingAlbums(true);
-    setAlbumsMsg(null);
-    try {
-      const res = await fetch('/api/google/albums');
-      const data = await res.json();
-      if (data.error) {
-        setAlbumsMsg(data.error);
-        setAlbums([]);
-      } else {
-        setAlbums(data.albums || []);
-        setAlbumsMsg(data.albums?.length ? null : 'Nenhum álbum encontrado');
-      }
-    } catch { setAlbumsMsg('Erro de conexão'); }
-    setLoadingAlbums(false);
-  };
-
-  const selectAlbum = (id: string) => {
-    setGoogleAlbumUrl(id);
-    saveAlbumUrlWithValue(id);
-  };
-
-  const saveAlbumUrlWithValue = async (value: string) => {
-    setAlbumUrlMsg(null);
-    const res = await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'google_album_url', value }),
-    });
-    setAlbumUrlMsg(res.ok ? 'Salvo!' : 'Erro ao salvar');
-  };
-
   const handleGoogleSync = async () => {
     setSyncing(true);
     setSyncMsg(null);
@@ -122,7 +77,7 @@ function AdminDashboard() {
         body: JSON.stringify({ albumUrl: googleAlbumUrl || undefined, force: true }),
       });
       const data = await res.json();
-      setSyncMsg(data.error ? `Erro: ${data.error}` : `${data.synced} novas fotos`);
+      setSyncMsg(data.error ? `Erro: ${data.error}` : `${data.synced} novas fotos sincronizadas`);
     } catch { setSyncMsg('Erro de conexão'); }
     setSyncing(false);
   };
@@ -233,61 +188,13 @@ function AdminDashboard() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">📸</div>
             <div>
               <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Google Fotos</h2>
-              <p className="text-sm text-stone-500">Sincronize fotos de um álbum</p>
+              <p className="text-sm text-stone-500">Busca fotos de um álbum público (sem OAuth)</p>
             </div>
-            {googleConnected && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Conectado</span>}
-          </div>
-
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            {!googleConnected ? (
-              <a href="/api/google/auth" className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700">
-                Conectar Google Fotos
-              </a>
-            ) : (
-              <button
-                onClick={disconnectGoogle}
-                className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50"
-              >
-                Desconectar
-              </button>
-            )}
           </div>
 
           <div className="mb-4">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <button
-                onClick={handleListAlbums}
-                disabled={loadingAlbums}
-                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-bold text-stone-700 hover:bg-stone-50 disabled:opacity-50 dark:border-stone-600 dark:text-stone-300"
-              >
-                {loadingAlbums ? 'Carregando...' : 'Listar Álbuns'}
-              </button>
-              {albumsMsg && <span className="text-sm text-stone-500">{albumsMsg}</span>}
-            </div>
-
-            {albums.length > 0 && (
-              <div className="mb-4 grid gap-2 sm:grid-cols-2">
-                {albums.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => selectAlbum(a.id)}
-                    className={`rounded-lg border p-3 text-left text-sm transition-colors ${
-                      googleAlbumUrl === a.id
-                        ? 'border-rose-400 bg-rose-50 dark:bg-rose-900/20'
-                        : 'border-stone-200 hover:border-stone-400 dark:border-stone-700'
-                    }`}
-                  >
-                    <span className="font-bold text-stone-800 dark:text-stone-200">{a.title}</span>
-                    {a.mediaItemsCount && (
-                      <span className="ml-2 text-stone-400">({a.mediaItemsCount} fotos)</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-
             <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-1">
-              Ou cole o link ou ID do álbum
+              Link do álbum compartilhado (photos.app.goo.gl/...)
             </label>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1">
@@ -295,7 +202,7 @@ function AdminDashboard() {
                   type="url"
                   value={googleAlbumUrl}
                   onChange={(e) => setGoogleAlbumUrl(e.target.value)}
-                  placeholder="ID do álbum ou https://photos.google.com/album/..."
+                  placeholder="https://photos.app.goo.gl/..."
                   className="block w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-400 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-200"
                 />
               </div>
@@ -308,7 +215,9 @@ function AdminDashboard() {
               </button>
               {albumUrlMsg && <span className="text-sm font-medium text-stone-500">{albumUrlMsg}</span>}
             </div>
-            <p className="mt-1 text-xs text-stone-400">Use o link do álbum (photos.google.com/album/...) ou apenas o ID. Conecte com a conta DONA do álbum.</p>
+            <p className="mt-1 text-xs text-stone-400">
+              O álbum precisa estar público (compartilhado com link). Nenhuma autenticação necessária.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
