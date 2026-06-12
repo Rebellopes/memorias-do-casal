@@ -133,9 +133,9 @@ export async function fetchSpotifyStatus(usuario: string) {
   return null;
 }
 
-export function getSpotifyAuthUrl(usuario: string) {
+export function getSpotifyAuthUrl(usuario: string, siteUrl?: string) {
   const clientId = process.env.SPOTIFY_CLIENT_ID!;
-  const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/spotify/callback`;
+  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/spotify/callback`;
   const scopes = 'user-read-currently-playing user-read-recently-played';
 
   const params = new URLSearchParams({
@@ -149,8 +149,8 @@ export function getSpotifyAuthUrl(usuario: string) {
   return `https://accounts.spotify.com/authorize?${params}`;
 }
 
-export async function exchangeSpotifyCode(code: string, usuario: string) {
-  const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/spotify/callback`;
+export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl?: string) {
+  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/spotify/callback`;
 
   const res = await fetch(SPOTIFY_TOKEN_URL, {
     method: 'POST',

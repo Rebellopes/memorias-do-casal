@@ -57,8 +57,8 @@ export async function getValidGoogleToken() {
   return tokens.access_token;
 }
 
-export function getGoogleAuthUrl() {
-  const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
+export function getGoogleAuthUrl(siteUrl?: string) {
+  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
@@ -72,8 +72,8 @@ export function getGoogleAuthUrl() {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
-export async function exchangeGoogleCode(code: string) {
-  const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
+export async function exchangeGoogleCode(code: string, siteUrl?: string) {
+  const redirectUri = `${siteUrl || process.env.NEXT_PUBLIC_SITE_URL}/api/google/callback`;
 
   const res = await fetch(GOOGLE_TOKEN_URL, {
     method: 'POST',
@@ -162,9 +162,65 @@ export async function listAlbums(): Promise<{ albums: GoogleAlbum[]; error?: str
   return { albums: allAlbums };
 }
 
-export async function syncGooglePhotos(albumId?: string) {
+export async function resolveGoogleUrl(input: string): Promise<string | undefined> {
+  let url = input.trim();
+
+  if (/^[A-Za-z0-9_-]{20,}$/.test(url) && !url.includes('/')) return url;
+
+  const albumMatch = url.match(/\/album\/([A-Za-z0-9_-]+)/);
+  if (albumMatch) return albumMatch[1];
+
+  const shareMatch = url.match(/\/share\/([A-Za-z0-9_-]+)/);
+  if (shareMatch) return shareMatch[1];
+
+  if (url.includes('goo.gl') || url.includes('photos.app.goo.gl')) {
+    try {
+      const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+      const resolved = res.url;
+      const shareMatch2 = resolved.match(/\/share\/([A-Za-z0-9_-]+)/);
+      if (shareMatch2) return shareMatch2[1];
+      const albumMatch2 = resolved.match(/\/album\/([A-Za-z0-9_-]+)/);
+      if (albumMatch2) return albumMatch2[1];
+    } catch { return undefined; }
+  }
+
+  return undefined;
+}
+
+export async function joinSharedAlbum(shareToken: string): Promise<string | undefined> {
+  const token = await getValidGoogleToken();
+  if (!token) return undefined;
+
+  const res = await fetch(`${GOOGLE_PHOTOS_API}/sharedAlbums:join`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ shareToken }),
+  });
+
+  if (!res.ok) return undefined;
+
+  const data = await res.json() as { album: { id: string } };
+  return data.album?.id;
+}
+
+export async function syncGooglePhotos(albumId?: string, albumUrl?: string) {
   const token = await getValidGoogleToken();
   if (!token) return { synced: 0, error: 'Not authenticated' };
+
+  let resolvedId = albumId;
+
+  if (!resolvedId && albumUrl) {
+    const shareToken = await resolveGoogleUrl(albumUrl);
+    if (shareToken && !/^[A-Za-z0-9_-]{20,}$/.test(shareToken)) {
+      resolvedId = shareToken;
+    } else if (shareToken && /^[A-Za-z0-9_-]{20,}$/.test(shareToken)) {
+      const joined = await joinSharedAlbum(shareToken);
+      if (joined) resolvedId = joined;
+    }
+  }
 
   let synced = 0;
   let nextPageToken: string | undefined;
@@ -180,7 +236,7 @@ export async function syncGooglePhotos(albumId?: string) {
     const body: Record<string, unknown> = {
       pageSize: 50,
     };
-    if (albumId) body.albumId = albumId;
+    if (resolvedId) body.albumId = resolvedId;
     if (nextPageToken) body.pageToken = nextPageToken;
 
     const res = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems:search`, {
