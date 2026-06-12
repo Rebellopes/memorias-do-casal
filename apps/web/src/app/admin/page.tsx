@@ -84,7 +84,7 @@ function AdminDashboard() {
       const res = await fetch('/api/google/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ albumUrl: googleAlbumUrl || undefined }),
+        body: JSON.stringify({ albumUrl: googleAlbumUrl || undefined, force: true }),
       });
       const data = await res.json();
       setSyncMsg(data.error ? `Erro: ${data.error}` : `${data.synced} novas fotos`);

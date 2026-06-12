@@ -197,9 +197,9 @@ export async function resolveGoogleUrl(input: string): Promise<{ type: 'albumId'
   return undefined;
 }
 
-export async function joinSharedAlbum(shareToken: string): Promise<string | undefined> {
+export async function joinSharedAlbum(shareToken: string): Promise<{ albumId?: string; error?: string }> {
   const token = await getValidGoogleToken();
-  if (!token) return undefined;
+  if (!token) return { error: 'Não autenticado no Google' };
 
   const res = await fetch(`${GOOGLE_PHOTOS_API}/sharedAlbums:join`, {
     method: 'POST',
@@ -211,13 +211,37 @@ export async function joinSharedAlbum(shareToken: string): Promise<string | unde
   });
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    console.error(`Failed to join shared album (${res.status}): ${body}`);
-    return undefined;
+    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+    const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
+    return { error: `Google API: ${msg}` };
   }
 
   const data = await res.json() as { album: { id: string } };
-  return data.album?.id;
+  if (!data.album?.id) return { error: 'Álbum não encontrado na resposta' };
+  return { albumId: data.album.id };
+}
+
+export async function listSharedAlbums(): Promise<{ albums: Array<{ id: string; title: string; shareToken?: string }>; error?: string }> {
+  const token = await getValidGoogleToken();
+  if (!token) return { albums: [], error: 'Não autenticado' };
+
+  const res = await fetch(`${GOOGLE_PHOTOS_API}/sharedAlbums?pageSize=50`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: { message: res.statusText } }));
+    const msg = (body as { error?: { message?: string } })?.error?.message || `${res.status}`;
+    return { albums: [], error: `Google API: ${msg}` };
+  }
+
+  const data = await res.json() as { sharedAlbums?: Array<{ id: string; title: string; shareInfo?: { shareToken?: string } }> };
+  if (!data.sharedAlbums) return { albums: [] };
+  return {
+    albums: data.sharedAlbums
+      .filter(a => a.id)
+      .map(a => ({ id: a.id, title: a.title, shareToken: a.shareInfo?.shareToken })),
+  };
 }
 
 export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Promise<{ synced: number; error?: string }> {
@@ -235,10 +259,10 @@ export async function syncGooglePhotos(albumId?: string, albumUrl?: string): Pro
       resolvedId = result.value;
     } else {
       const joined = await joinSharedAlbum(result.value);
-      if (!joined) {
-        return { synced: 0, error: 'Não foi possível acessar o álbum compartilhado. Certifique-se de que o link está correto e que você autorizou o acesso a álbuns compartilhados.' };
+      if (joined.error || !joined.albumId) {
+        return { synced: 0, error: `Não foi possível acessar o álbum compartilhado. ${joined.error || ''}` };
       }
-      resolvedId = joined;
+      resolvedId = joined.albumId;
     }
   }
 
