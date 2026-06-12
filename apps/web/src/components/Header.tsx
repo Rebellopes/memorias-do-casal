@@ -70,7 +70,7 @@ export function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm transition-colors ${
+                  className={`text-base transition-colors ${
                     isActive
                       ? 'font-medium text-rose-600 dark:text-rose-400'
                       : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'
