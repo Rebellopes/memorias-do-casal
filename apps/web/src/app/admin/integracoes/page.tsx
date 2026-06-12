@@ -3,17 +3,39 @@
 import { useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
+interface Album {
+  id: string;
+  title: string;
+  mediaItemsCount: string;
+  coverPhotoBaseUrl?: string;
+}
+
 function IntegracoesAdmin() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [loadingAlbums, setLoadingAlbums] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState('');
 
   const handleGoogleSync = async () => {
     setSyncing(true);
     setSyncResult(null);
-    const res = await fetch('/api/google/sync', { method: 'POST' });
+    const res = await fetch('/api/google/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ albumId: selectedAlbumId || undefined }),
+    });
     const data = await res.json();
     setSyncResult(`Sincronizado: ${data.synced} novas fotos`);
     setSyncing(false);
+  };
+
+  const handleListAlbums = async () => {
+    setLoadingAlbums(true);
+    const res = await fetch('/api/google/albums');
+    const data = await res.json();
+    setAlbums(data.albums || []);
+    setLoadingAlbums(false);
   };
 
   return (
@@ -54,10 +76,11 @@ function IntegracoesAdmin() {
             </div>
             <div>
               <h2 className="font-medium text-stone-900">Google Fotos</h2>
-              <p className="text-sm text-stone-500">Sincronize fotos do álbum compartilhado</p>
+              <p className="text-sm text-stone-500">Sincronize fotos de um álbum específico</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+
+          <div className="mb-4 flex items-center gap-3">
             <a
               href="/api/google/auth"
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -65,13 +88,43 @@ function IntegracoesAdmin() {
               Conectar Google Fotos
             </a>
             <button
-              onClick={handleGoogleSync}
-              disabled={syncing}
+              onClick={handleListAlbums}
+              disabled={loadingAlbums}
               className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50"
             >
-              {syncing ? 'Sincronizando...' : 'Sincronizar Agora'}
+              {loadingAlbums ? 'Carregando...' : 'Listar Álbuns'}
             </button>
           </div>
+
+          {albums.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-stone-700">Álbum</label>
+              <select
+                value={selectedAlbumId}
+                onChange={(e) => setSelectedAlbumId(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-rose-400"
+              >
+                <option value="">Usar GOOGLE_ALBUM_ID do .env</option>
+                {albums.map((album) => (
+                  <option key={album.id} value={album.id}>
+                    {album.title} ({album.mediaItemsCount || '0'} fotos)
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-stone-400">
+                Selecione um álbum para sincronizar apenas as fotos dele.
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleGoogleSync}
+            disabled={syncing}
+            className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50"
+          >
+            {syncing ? 'Sincronizando...' : 'Sincronizar Agora'}
+          </button>
+
           {syncResult && (
             <p className="mt-3 text-sm text-stone-600">{syncResult}</p>
           )}

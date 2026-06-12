@@ -125,7 +125,44 @@ interface GoogleMediaItemsResponse {
   nextPageToken?: string;
 }
 
-export async function syncGooglePhotos() {
+export interface GoogleAlbum {
+  id: string;
+  title: string;
+  mediaItemsCount: string;
+  coverPhotoBaseUrl?: string;
+}
+
+interface GoogleAlbumsResponse {
+  albums?: GoogleAlbum[];
+  nextPageToken?: string;
+}
+
+export async function listAlbums(): Promise<{ albums: GoogleAlbum[]; error?: string }> {
+  const token = await getValidGoogleToken();
+  if (!token) return { albums: [], error: 'Not authenticated' };
+
+  const allAlbums: GoogleAlbum[] = [];
+  let nextPageToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({ pageSize: '50' });
+    if (nextPageToken) params.set('pageToken', nextPageToken);
+
+    const res = await fetch(`${GOOGLE_PHOTOS_API}/albums?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) return { albums: allAlbums, error: 'Failed to list albums' };
+
+    const data = (await res.json()) as GoogleAlbumsResponse;
+    if (data.albums) allAlbums.push(...data.albums);
+    nextPageToken = data.nextPageToken;
+  } while (nextPageToken);
+
+  return { albums: allAlbums };
+}
+
+export async function syncGooglePhotos(albumId?: string) {
   const token = await getValidGoogleToken();
   if (!token) return { synced: 0, error: 'Not authenticated' };
 
@@ -143,6 +180,7 @@ export async function syncGooglePhotos() {
     const body: Record<string, unknown> = {
       pageSize: 50,
     };
+    if (albumId) body.albumId = albumId;
     if (nextPageToken) body.pageToken = nextPageToken;
 
     const res = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems:search`, {
