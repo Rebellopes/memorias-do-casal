@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchSpotifyStatus } from '@/lib/spotify';
 
 export async function GET() {
-  const pessoas = ['Pessoa A', 'Pessoa B'];
+  const { data: tokens } = await supabaseAdmin
+    .from('integration_tokens')
+    .select('usuario')
+    .eq('provider', 'spotify');
+
+  const pessoas = tokens?.map((t) => t.usuario) ?? [];
 
   const results = await Promise.allSettled(
     pessoas.map(async (usuario) => {
