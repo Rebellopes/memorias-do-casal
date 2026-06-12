@@ -31,6 +31,13 @@
 @layer base {
   body {
     font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 18px;
+  }
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
   }
 }
 

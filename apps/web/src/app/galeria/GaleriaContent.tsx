@@ -93,10 +93,10 @@ export function GaleriaContent() {
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
             {photo.favorita && (
-              <span className="absolute right-2 top-2 text-sm text-yellow-400">★</span>
+              <span className="absolute right-2 top-2 text-base text-yellow-400">★</span>
             )}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/40 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-              <span className="text-xs text-white">
+              <span className="text-sm text-white">
                 {new Date(photo.data_foto).toLocaleDateString('pt-BR')}
               </span>
             </div>
@@ -126,11 +126,11 @@ export function GaleriaContent() {
             />
           </div>
           <div className="absolute bottom-4 text-center">
-            <p className="text-sm text-white/80">
+            <p className="text-white/80">
               {new Date(selected.data_foto).toLocaleDateString('pt-BR')}
             </p>
             {selected.descricao && (
-              <p className="mt-1 text-sm text-white/60">{selected.descricao}</p>
+              <p className="mt-1 text-white/60">{selected.descricao}</p>
             )}
           </div>
         </div>

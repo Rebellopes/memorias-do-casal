@@ -86,7 +86,7 @@ export function HomeContent() {
 
       {timeline.length > 0 && (
         <section className="mb-20">
-          <h2 className="mb-8 text-center font-serif text-2xl font-semibold text-stone-800">
+          <h2 className="mb-8 text-center font-serif text-3xl font-bold text-stone-800">
             Hoje em Outros Anos
           </h2>
           <div className="space-y-4">
@@ -104,7 +104,7 @@ export function HomeContent() {
                       <>
                         <p className="font-medium text-stone-900">{item.titulo}</p>
                         {item.descricao && (
-                          <p className="text-sm text-stone-500">{item.descricao}</p>
+                          <p className="text-stone-500">{item.descricao}</p>
                         )}
                         <p className="mt-1 text-xs text-stone-400">
                           {item.data_evento && new Date(item.data_evento).toLocaleDateString('pt-BR')}
@@ -119,7 +119,7 @@ export function HomeContent() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm text-stone-600">Foto</p>
+                          <p className="font-medium text-stone-600">Foto</p>
                           <p className="text-xs text-stone-400">
                             {item.data_foto && new Date(item.data_foto).toLocaleDateString('pt-BR')}
                           </p>
@@ -130,7 +130,7 @@ export function HomeContent() {
                       <>
                         <p className="font-medium text-stone-900">{item.titulo}</p>
                         {item.texto && (
-                          <p className="mt-1 text-sm text-stone-600 line-clamp-2">{item.texto}</p>
+                          <p className="mt-1 text-stone-600 line-clamp-2">{item.texto}</p>
                         )}
                       </>
                     )}
@@ -147,7 +147,7 @@ export function HomeContent() {
           href="/dedicatorias"
           className="group rounded-xl border border-stone-100 bg-stone-50 p-6 transition-colors hover:border-rose-100 hover:bg-rose-50/30"
         >
-          <h3 className="mb-2 font-serif text-lg font-medium text-stone-700 group-hover:text-rose-700">
+          <h3 className="mb-2 font-serif text-xl font-bold text-stone-700 group-hover:text-rose-700">
             Última Dedicatória
           </h3>
           {latestDedication ? (
@@ -167,7 +167,7 @@ export function HomeContent() {
           href="/galeria"
           className="group rounded-xl border border-stone-100 bg-stone-50 p-6 transition-colors hover:border-rose-100 hover:bg-rose-50/30"
         >
-          <h3 className="mb-2 font-serif text-lg font-medium text-stone-700 group-hover:text-rose-700">
+          <h3 className="mb-2 font-serif text-xl font-bold text-stone-700 group-hover:text-rose-700">
             Última Foto
           </h3>
           <p className="text-sm text-stone-400">Galeria de memórias</p>
@@ -177,7 +177,7 @@ export function HomeContent() {
           href="/musica"
           className="group rounded-xl border border-stone-100 bg-stone-50 p-6 transition-colors hover:border-rose-100 hover:bg-rose-50/30"
         >
-          <h3 className="mb-2 font-serif text-lg font-medium text-stone-700 group-hover:text-rose-700">
+          <h3 className="mb-2 font-serif text-xl font-bold text-stone-700 group-hover:text-rose-700">
             Atividade Musical
           </h3>
           <p className="text-sm text-stone-400">Conecte o Spotify</p>

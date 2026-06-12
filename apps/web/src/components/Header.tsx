@@ -45,13 +45,13 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-stone-100 bg-white/80 backdrop-blur-md transition-colors dark:border-stone-800 dark:bg-stone-950/80">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-serif text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
+          <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
             Nossas Memórias
           </Link>
           {admin && (
             <Link
               href="/admin"
-              className={`text-sm transition-colors ${
+              className={`text-base transition-colors ${
                 isAdminPage
                   ? 'font-medium text-rose-600 dark:text-rose-400'
                   : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
@@ -88,7 +88,7 @@ export function Header() {
           {!isAdminPage && <MusicBadge />}
           <ThemeToggle />
           {admin && isAdminPage && (
-            <button onClick={handleLogout} className="text-xs text-stone-400 hover:text-stone-600">
+            <button onClick={handleLogout} className="text-sm text-stone-400 hover:text-stone-600">
               Sair
             </button>
           )}

@@ -5,7 +5,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('site_settings')
     .select('key, value')
-    .in('key', ['home_photo']);
+    .in('key', ['home_photo', 'google_album_url']);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
