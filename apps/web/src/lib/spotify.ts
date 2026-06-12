@@ -109,6 +109,7 @@ export async function fetchSpotifyStatus(usuario: string) {
         artista: data.item.artists.map((a) => a.name).join(', '),
         album: data.item.album.name,
         capa: data.item.album.images[0]?.url ?? '',
+        url: data.item.external_urls.spotify,
         reproduzindo_agora: true,
         ultima_reproducao: null,
       };
@@ -124,6 +125,7 @@ export async function fetchSpotifyStatus(usuario: string) {
         artista: last.track.artists.map((a) => a.name).join(', '),
         album: last.track.album.name,
         capa: last.track.album.images[0]?.url ?? '',
+        url: last.track.external_urls.spotify,
         reproduzindo_agora: false,
         ultima_reproducao: last.played_at,
       };
@@ -146,6 +148,14 @@ export function getSpotifyAuthUrl(usuario: string, siteUrl?: string) {
   });
 
   return `https://accounts.spotify.com/authorize?${params}&state=${encodeURIComponent(usuario)}`;
+}
+
+export async function fetchSpotifyProfile(accessToken: string) {
+  const res = await fetch(`${SPOTIFY_API}/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<{ id: string; display_name: string }>;
 }
 
 export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl?: string): Promise<{ error?: string } | null> {
@@ -172,7 +182,7 @@ export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl
   const data = await res.json();
   const expiresAt = new Date(Date.now() + data.expires_in * 1000);
 
-  const { error } = await supabaseAdmin.from('integration_tokens').upsert(
+  const { error: upsertError } = await supabaseAdmin.from('integration_tokens').upsert(
     {
       provider: 'spotify',
       usuario,
@@ -183,6 +193,17 @@ export async function exchangeSpotifyCode(code: string, usuario: string, siteUrl
     { onConflict: 'provider,usuario' },
   );
 
-  if (error) return { error: `Supabase upsert error: ${error.message}` };
+  if (upsertError) return { error: `Supabase upsert error: ${upsertError.message}` };
+
+  const profile = await fetchSpotifyProfile(data.access_token);
+  const displayName = profile?.display_name?.trim();
+  if (displayName && displayName !== usuario) {
+    await supabaseAdmin
+      .from('integration_tokens')
+      .update({ usuario: displayName })
+      .eq('provider', 'spotify')
+      .eq('usuario', usuario);
+  }
+
   return {};
 }

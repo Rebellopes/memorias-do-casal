@@ -34,11 +34,27 @@ interface TimelineItem {
   tipo: 'evento' | 'foto' | 'dedicatoria';
 }
 
+interface SpotifyStatus {
+  musica: string;
+  artista: string;
+  album: string;
+  capa: string;
+  url: string;
+  reproduzindo_agora: boolean;
+  ultima_reproducao: string | null;
+}
+
+interface SpotifyPerson {
+  usuario: string;
+  status: SpotifyStatus | null;
+}
+
 export function HomeContent() {
   const [latestDedication, setLatestDedication] = useState<Dedication | null>(null);
   const [dailyMessage, setDailyMessage] = useState<DailyMessage | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [homePhoto, setHomePhoto] = useState('');
+  const [spotify, setSpotify] = useState<SpotifyPerson[]>([]);
 
   useEffect(() => {
     fetch('/api/dedications')
@@ -59,11 +75,21 @@ export function HomeContent() {
       .then((r) => r.json())
       .then((d) => { if (d.home_photo) setHomePhoto(d.home_photo); });
 
+    const fetchSpotify = () =>
+      fetch('/api/spotify/status')
+        .then((r) => r.json())
+        .then(setSpotify);
+
+    fetchSpotify();
+    const spotifyInterval = setInterval(fetchSpotify, 30000);
+
     fetch('/api/google/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     }).catch(() => {});
+
+    return () => clearInterval(spotifyInterval);
   }, []);
 
   return (

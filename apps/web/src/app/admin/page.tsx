@@ -14,7 +14,6 @@ function AdminDashboard() {
   const [albumUrlMsg, setAlbumUrlMsg] = useState<string | null>(null);
 
   const [spotifyPersons, setSpotifyPersons] = useState<string[]>([]);
-  const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
   const [syncing, setSyncing] = useState(false);
@@ -27,20 +26,21 @@ function AdminDashboard() {
       if (d.google_album_url) setGoogleAlbumUrl(d.google_album_url);
     });
 
-    Promise.all([
-      fetch('/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa A')),
-      fetch('/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa B')),
-    ]).then(async ([a, b]) => {
-      const aData = await a.json();
-      const bData = await b.json();
-      setSpotifyAuthUrls({ 'Pessoa A': aData.url, 'Pessoa B': bData.url });
+    const slots = ['Pessoa A', 'Pessoa B'];
+    Promise.all(
+      slots.map((s) =>
+        fetch('/api/spotify/auth?usuario=' + encodeURIComponent(s)).then((r) => r.json())
+      )
+    ).then((results) => {
+      const urls: Record<string, string> = {};
+      results.forEach((r, i) => { urls[slots[i]!] = r.url; });
+      setSpotifyAuthUrls(urls);
     });
 
     fetch('/api/spotify/status').then((r) => r.json()).then((data) => {
       if (Array.isArray(data)) {
         const connected = data.filter((p: { status: unknown }) => p.status);
         setSpotifyPersons(connected.map((p: { usuario: string }) => p.usuario));
-        setSpotifyConnected(connected.length > 0);
       }
     });
   }, []);
@@ -73,7 +73,6 @@ function AdminDashboard() {
     setDisconnecting(usuario);
     await fetch(`/api/spotify/tokens?usuario=${encodeURIComponent(usuario)}`, { method: 'DELETE' });
     setSpotifyPersons((prev) => prev.filter((p) => p !== usuario));
-    if (spotifyPersons.length <= 1) setSpotifyConnected(false);
     setDisconnecting(null);
   };
 
@@ -153,51 +152,51 @@ function AdminDashboard() {
           )}
         </div>
 
-        <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954]/10 text-lg">🎵</div>
-            <div>
-              <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Spotify</h2>
-              <p className="text-sm text-stone-500">Compartilhe a atividade musical de cada um</p>
+          <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954]/10 text-lg">🎵</div>
+              <div>
+                <h2 className="text-lg font-bold text-stone-900 dark:text-stone-200">Spotify</h2>
+                <p className="text-sm text-stone-500">Compartilhe a atividade musical de cada um</p>
+              </div>
+              {spotifyPersons.length > 0 && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Conectado</span>}
             </div>
-            {spotifyConnected && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Conectado</span>}
+            <div className="flex flex-wrap gap-3">
+              {['Pessoa A', 'Pessoa B'].map((slot) =>
+                spotifyPersons.includes(slot) ? (
+                  <button
+                    key={slot}
+                    onClick={() => disconnectSpotify(slot)}
+                    disabled={disconnecting === slot}
+                    className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {disconnecting === slot ? 'Desconectando...' : `Desconectar ${slot}`}
+                  </button>
+                ) : (
+                  <a
+                    key={slot}
+                    href={spotifyAuthUrls[slot] || '#'}
+                    className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
+                  >
+                    Conectar {slot}
+                  </a>
+                )
+              )}
+              {spotifyPersons
+                .filter((p) => !['Pessoa A', 'Pessoa B'].includes(p))
+                .map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => disconnectSpotify(p)}
+                    disabled={disconnecting === p}
+                    className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {disconnecting === p ? 'Desconectando...' : `Desconectar ${p}`}
+                  </button>
+                ))}
+            </div>
+            {spotifyPersons.length === 0 && <p className="mt-3 text-xs text-stone-400">Clique em um dos botões para autorizar o Spotify. Você será redirecionado e depois voltará para cá.</p>}
           </div>
-          <div className="flex flex-wrap gap-3">
-            {!spotifyPersons.includes('Pessoa A') ? (
-              <a
-                href={spotifyAuthUrls['Pessoa A'] || '#'}
-                className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
-              >
-                Conectar Pessoa A
-              </a>
-            ) : (
-              <button
-                onClick={() => disconnectSpotify('Pessoa A')}
-                disabled={disconnecting === 'Pessoa A'}
-                className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-              >
-                {disconnecting === 'Pessoa A' ? 'Desconectando...' : 'Desconectar Pessoa A'}
-              </button>
-            )}
-            {!spotifyPersons.includes('Pessoa B') ? (
-              <a
-                href={spotifyAuthUrls['Pessoa B'] || '#'}
-                className="inline-block rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5"
-              >
-                Conectar Pessoa B
-              </a>
-            ) : (
-              <button
-                onClick={() => disconnectSpotify('Pessoa B')}
-                disabled={disconnecting === 'Pessoa B'}
-                className="rounded-lg border border-red-300 px-5 py-2 text-sm font-bold text-red-600 hover:bg-red-50 disabled:opacity-50"
-              >
-                {disconnecting === 'Pessoa B' ? 'Desconectando...' : 'Desconectar Pessoa B'}
-              </button>
-            )}
-          </div>
-          {!spotifyConnected && <p className="mt-3 text-xs text-stone-400">Clique em um dos botões para autorizar o Spotify. Você será redirecionado e depois voltará para cá.</p>}
-        </div>
 
         <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
           <div className="mb-4 flex items-center gap-3">

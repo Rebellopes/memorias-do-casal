@@ -8,6 +8,7 @@ interface SpotifyStatus {
   artista: string;
   album: string;
   capa: string;
+  url: string;
   reproduzindo_agora: boolean;
   ultima_reproducao: string | null;
 }
@@ -21,9 +22,14 @@ export function MusicaContent() {
   const [persons, setPersons] = useState<SpotifyPerson[]>([]);
 
   useEffect(() => {
-    fetch('/api/spotify/status')
-      .then((r) => r.json())
-      .then(setPersons);
+    const fetchStatus = () =>
+      fetch('/api/spotify/status')
+        .then((r) => r.json())
+        .then(setPersons);
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -46,7 +52,12 @@ export function MusicaContent() {
             </h3>
 
             {person.status ? (
-              <div className="flex gap-4">
+              <a
+                href={person.status.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-4 transition-opacity hover:opacity-80"
+              >
                 <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-stone-200 dark:bg-stone-800">
                   {person.status.capa && (
                     <Image
@@ -73,7 +84,7 @@ export function MusicaContent() {
                     </p>
                   ) : null}
                 </div>
-              </div>
+              </a>
             ) : (
               <p className="text-sm text-stone-400 text-center py-8">
                 {person.usuario} ainda não conectou o Spotify
