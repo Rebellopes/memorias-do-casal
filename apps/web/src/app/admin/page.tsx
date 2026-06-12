@@ -19,11 +19,21 @@ function AdminDashboard() {
 
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [spotifyAuthUrls, setSpotifyAuthUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((d) => {
       if (d.home_photo) setHomePhoto(d.home_photo);
       if (d.google_album_url) setGoogleAlbumUrl(d.google_album_url);
+    });
+
+    Promise.all([
+      fetch('/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa A')),
+      fetch('/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa B')),
+    ]).then(async ([a, b]) => {
+      const aData = await a.json();
+      const bData = await b.json();
+      setSpotifyAuthUrls({ 'Pessoa A': aData.url, 'Pessoa B': bData.url });
     });
 
     fetch('/api/spotify/status').then((r) => r.json()).then((data) => {
@@ -155,7 +165,9 @@ function AdminDashboard() {
           <div className="flex flex-wrap gap-3">
             {!spotifyPersons.includes('Pessoa A') ? (
               <a
-                href={'/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa A')}
+                href={spotifyAuthUrls['Pessoa A'] || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block rounded-lg bg-[#1DB954] px-5 py-2 text-sm font-bold text-white hover:opacity-90"
               >
                 Conectar Pessoa A
@@ -171,7 +183,9 @@ function AdminDashboard() {
             )}
             {!spotifyPersons.includes('Pessoa B') ? (
               <a
-                href={'/api/spotify/auth?usuario=' + encodeURIComponent('Pessoa B')}
+                href={spotifyAuthUrls['Pessoa B'] || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block rounded-lg border border-[#1DB954] px-5 py-2 text-sm font-bold text-[#1DB954] hover:bg-[#1DB954]/5"
               >
                 Conectar Pessoa B
