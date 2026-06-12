@@ -11,50 +11,72 @@ interface Album {
 }
 
 function AdminDashboard() {
+  const [homePhoto, setHomePhoto] = useState('');
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState<string | null>(null);
+
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loadingAlbums, setLoadingAlbums] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState('');
-
-  const handleGoogleSync = async () => {
-    setSyncing(true);
-    setSyncResult(null);
-    const res = await fetch('/api/google/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ albumId: selectedAlbumId || undefined }),
-    });
-    const data = await res.json();
-    setSyncResult(`Sincronizado: ${data.synced} novas fotos`);
-    setSyncing(false);
-  };
-
-  const handleListAlbums = async () => {
-    setLoadingAlbums(true);
-    const res = await fetch('/api/google/albums');
-    const data = await res.json();
-    setAlbums(data.albums || []);
-    setLoadingAlbums(false);
-  };
-
-  const [homePhoto, setHomePhoto] = useState('');
-  const [savingPhoto, setSavingPhoto] = useState(false);
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then((d) => {
       if (d.home_photo) setHomePhoto(d.home_photo);
     });
+
+    fetch('/api/spotify/status').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setSpotifyConnected(data.some((p: { status: unknown }) => p.status));
+    });
+
+    fetch('/api/google/albums').then((r) => r.json()).then((data) => {
+      if (data.albums) { setGoogleConnected(true); setAlbums(data.albums); }
+    }).catch(() => {});
   }, []);
 
   const saveHomePhoto = async () => {
     setSavingPhoto(true);
-    await fetch('/api/settings', {
+    setPhotoMsg(null);
+    const res = await fetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: 'home_photo', value: homePhoto }),
     });
+    if (res.ok) setPhotoMsg('Salvo!');
+    else setPhotoMsg('Erro ao salvar');
     setSavingPhoto(false);
+  };
+
+  const handleListAlbums = async () => {
+    setLoadingAlbums(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch('/api/google/albums');
+      const data = await res.json();
+      if (data.error) { setSyncMsg(data.error); setAlbums([]); }
+      else { setAlbums(data.albums || []); setGoogleConnected(true); }
+    } catch { setSyncMsg('Erro de conexão'); }
+    setLoadingAlbums(false);
+  };
+
+  const handleGoogleSync = async () => {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch('/api/google/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ albumId: selectedAlbumId || undefined }),
+      });
+      const data = await res.json();
+      if (data.error) setSyncMsg(data.error);
+      else setSyncMsg(`Sincronizado: ${data.synced} novas fotos`);
+    } catch { setSyncMsg('Erro ao sincronizar'); }
+    setSyncing(false);
   };
 
   return (
@@ -86,7 +108,7 @@ function AdminDashboard() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">📸</div>
             <div>
               <h2 className="font-medium text-stone-900 dark:text-stone-200">Foto Principal da Home</h2>
-              <p className="text-sm text-stone-500">URL da foto que aparece no círculo central da página inicial</p>
+              <p className="text-sm text-stone-500">URL da foto que aparece no círculo central</p>
             </div>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -106,13 +128,14 @@ function AdminDashboard() {
             >
               {savingPhoto ? 'Salvando...' : 'Salvar'}
             </button>
+            {photoMsg && <span className="text-sm text-stone-500">{photoMsg}</span>}
           </div>
           {homePhoto && (
             <div className="mt-4 flex items-center gap-3">
               <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-stone-100">
-                <img src={homePhoto} alt="Preview" className="h-full w-full object-cover" />
+                <img src={homePhoto} alt="" className="h-full w-full object-cover" />
               </div>
-              <span className="text-xs text-stone-400 truncate">{homePhoto}</span>
+              <span className="truncate text-xs text-stone-400">{homePhoto}</span>
             </div>
           )}
         </div>
@@ -124,6 +147,7 @@ function AdminDashboard() {
               <h2 className="font-medium text-stone-900 dark:text-stone-200">Spotify</h2>
               <p className="text-sm text-stone-500">Compartilhe a atividade musical de cada um</p>
             </div>
+            {spotifyConnected && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">Conectado</span>}
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/api/spotify/auth?usuario=Pessoa A" className="rounded-lg bg-[#1DB954] px-4 py-2 text-sm font-medium text-white hover:opacity-90">
@@ -133,6 +157,7 @@ function AdminDashboard() {
               Conectar Pessoa B
             </a>
           </div>
+          {!spotifyConnected && <p className="mt-3 text-xs text-stone-400">Clique em um dos botões acima para autorizar o Spotify. Você será redirecionado ao Spotify e depois voltará para cá.</p>}
         </div>
 
         <div className="rounded-xl border border-stone-200 p-6 dark:border-stone-700">
@@ -140,8 +165,9 @@ function AdminDashboard() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg">📸</div>
             <div>
               <h2 className="font-medium text-stone-900 dark:text-stone-200">Google Fotos</h2>
-              <p className="text-sm text-stone-500">Sincronize fotos de um álbum específico</p>
+              <p className="text-sm text-stone-500">Sincronize fotos de um álbum</p>
             </div>
+            {googleConnected && <span className="ml-auto rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">Conectado</span>}
           </div>
 
           <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -156,6 +182,8 @@ function AdminDashboard() {
               {loadingAlbums ? 'Carregando...' : 'Listar Álbuns'}
             </button>
           </div>
+
+          {!googleConnected && <p className="mb-3 text-xs text-stone-400">Clique em "Conectar Google Fotos" para autorizar. Você será redirecionado ao Google e depois voltará para cá.</p>}
 
           {albums.length > 0 && (
             <div className="mb-4">
@@ -182,7 +210,7 @@ function AdminDashboard() {
             >
               {syncing ? 'Sincronizando...' : 'Sincronizar Agora'}
             </button>
-            {syncResult && <span className="text-sm text-stone-600">{syncResult}</span>}
+            {syncMsg && <span className="text-sm text-stone-500">{syncMsg}</span>}
           </div>
         </div>
       </div>

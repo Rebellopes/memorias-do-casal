@@ -14,5 +14,5 @@ export async function GET(request: Request) {
     return new Response('Failed to exchange code. Make sure to grant offline access.', { status: 500 });
   }
 
-  redirect('/admin/integracoes');
+  redirect('/admin');
 }

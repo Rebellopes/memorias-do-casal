@@ -15,5 +15,5 @@ export async function GET(request: Request) {
     return new Response('Failed to exchange code', { status: 500 });
   }
 
-  redirect('/admin/integracoes');
+  redirect('/admin');
 }
