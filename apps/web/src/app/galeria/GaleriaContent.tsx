@@ -24,6 +24,16 @@ export function GaleriaContent() {
 
   useEffect(() => {
     fetch('/api/photos').then((r) => r.json()).then(setPhotos);
+
+    fetch('/api/google/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).then((r) => r.json()).then((data) => {
+      if (data.synced > 0) {
+        fetch('/api/photos').then((r) => r.json()).then(setPhotos);
+      }
+    }).catch(() => {});
   }, []);
 
   const years = useMemo(() => {

@@ -58,6 +58,12 @@ export function HomeContent() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then((d) => { if (d.home_photo) setHomePhoto(d.home_photo); });
+
+    fetch('/api/google/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    }).catch(() => {});
   }, []);
 
   return (
